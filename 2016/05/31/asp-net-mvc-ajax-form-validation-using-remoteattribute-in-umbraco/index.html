@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Validating ASP.NET MVC form in razor with AJAX using RemoteAttribute in Umbraco application | aburok&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="ChallengeMy task was to add client side validation of password field to existing form.Validation on server side was already implemented.Rewriting the password validation algorithm on client doesn’t ma">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Validating ASP.NET MVC form in razor with AJAX using RemoteAttribute in Umbraco application">
+<meta property="og:url" content="http://aburok.github.io/2016/05/31/asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco/index.html">
+<meta property="og:site_name" content="aburok's blog">
+<meta property="og:description" content="ChallengeMy task was to add client side validation of password field to existing form.Validation on server side was already implemented.Rewriting the password validation algorithm on client doesn’t ma">
+<meta property="og:updated_time" content="2016-05-31T21:07:15.248Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Validating ASP.NET MVC form in razor with AJAX using RemoteAttribute in Umbraco application">
+<meta name="twitter:description" content="ChallengeMy task was to add client side validation of password field to existing form.Validation on server side was already implemented.Rewriting the password validation algorithm on client doesn’t ma">
+  
+    <link rel="alternate" href="/atom.xml" title="aburok&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">aburok&#39;s blog</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">yet another .net blog</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Zoeken"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://aburok.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/05/31/asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco/" class="article-date">
+  <time datetime="2016-05-31T21:07:15.000Z" itemprop="datePublished">2016-05-31</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Validating ASP.NET MVC form in razor with AJAX using RemoteAttribute in Umbraco application
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="Challenge"><a href="#Challenge" class="headerlink" title="Challenge"></a>Challenge</h1><p>My task was to add client side validation of password field to existing form.<br>Validation on server side was already implemented.<br>Rewriting the password validation algorithm on client doesn’t made sense.<br>Only question was how to reuse this logic.</p>
+<p>I’ve used the jQuery Unobtrusive Validation library provided for ASP.NET MVC.<br>MVC comes with <code>System.Web.Mvc.RemoteAttribute</code> class.<br>This class needs to be put on property that you want to remotely validate.</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Required]</span><br><span class="line">[Remote(<span class="string">"ValidatePassword"</span>,</span><br><span class="line">    <span class="string">"Validation"</span>,</span><br><span class="line">    HttpMethod = <span class="string">"POST"</span>,</span><br><span class="line">    AdditionalFields = <span class="string">"EmailAddress, UserName"</span>)]</span><br><span class="line">[DataType(DataType.Password)]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">string</span> Password &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br></pre></td></tr></table></figure>
+<p>The <code>RemoteAttribute</code> has couple of parameters to pass :</p>
+<ul>
+<li><code>ValidatePassword</code> - name of an action inside a ASP.NET MVC Controller that will be used to validate,</li>
+<li><code>Validation</code> - name prefix of controller (full name: <code>ValidationController</code>), that contains validation action,</li>
+<li><code>HttpMethod = &quot;POST&quot;</code> - http method used to communicate with server, with <code>POST</code> method, password will not be exposed in url,</li>
+<li><code>AdditionalFields = &quot;EmailAddress, UserName&quot;</code> - fields that we want to send along with the password to validation action.</li>
+</ul>
+<p>ValidationController class :</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">[OutputCache(Location = OutputCacheLocation.None, NoStore = <span class="literal">true</span>)]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">ValidationController</span> : <span class="title">SurfaceController</span></span><br><span class="line">&#123;</span><br><span class="line">    [System.Web.Http.HttpPost]</span><br><span class="line">    <span class="function"><span class="keyword">public</span> JsonResult <span class="title">ValidatePassword</span>(<span class="params">ValidatePasswordRequest request</span>)</span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">string</span>.IsNullOrWhiteSpace(request.EmailAddress)</span><br><span class="line">            || <span class="keyword">string</span>.IsNullOrWhiteSpace(request.UserName)</span><br><span class="line">            || <span class="keyword">string</span>.IsNullOrWhiteSpace(request.Password))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> Json(<span class="literal">true</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> validationResults = PasswordValidator.Validate(</span><br><span class="line">            request.Password,</span><br><span class="line">            request.UserName,</span><br><span class="line">            request.EmailAddress);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// if no errors were returned then return true</span></span><br><span class="line">        <span class="keyword">if</span> (validationResults == PasswordMessage.Valid)</span><br><span class="line">            <span class="keyword">return</span> Json(<span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> Json(validationResults.ToString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ValidatePassword</code> action method is marked with <code>HttpPost</code> attribute.<br>This will tell the server to only accept http <code>POST</code> requests.</p>
+<p>Method takes as a parameter object of following class:</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">ValidatePasswordRequest</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> Password &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> UserName &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> EmailAddress &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Name of properties in the <code>ValidatePasswordRequest</code> class must match names of view model that is used to render the form.</p>
+<p>Following class is being used to render form:</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">RegisterUserViewModel</span></span><br><span class="line">&#123;</span><br><span class="line">    [DisplayName(<span class="string">"User name"</span>)]</span><br><span class="line">    [Required]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> UserName &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line"></span><br><span class="line">    [DisplayName(<span class="string">"Email address"</span>)]</span><br><span class="line">    [Required]</span><br><span class="line">    [DataType(DataType.EmailAddress)]</span><br><span class="line">    [EmailAddress]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> EmailAddress &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line"></span><br><span class="line">    [Required]</span><br><span class="line">    [Remote(<span class="string">"ValidatePassword"</span>,</span><br><span class="line">        <span class="string">"Validation"</span>,</span><br><span class="line">        HttpMethod = <span class="string">"POST"</span>,</span><br><span class="line">        AdditionalFields = <span class="string">"EmailAddress, UserName"</span>)]</span><br><span class="line">    [DataType(DataType.Password)]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> Password &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line"></span><br><span class="line">    [DisplayName(<span class="string">"Password confirmation"</span>)]</span><br><span class="line">    [Required]</span><br><span class="line">    [DataType(DataType.Password)]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> PasswordConfirmation &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>In razor we have just a standard form:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">@using (Html.BeginUmbracoForm&lt;RegisterUserController&gt;(</span><br><span class="line">    &quot;MemberRegister&quot;, FormMethod.Post, new &#123; @class = &quot;validate-form&quot; &#125;))</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    &lt;fieldset class=&quot;form-group&quot;&gt;</span><br><span class="line">        &lt;label&gt;</span><br><span class="line">            @Html.DisplayNameFor(m =&gt; m.Password) &lt;sup&gt;*&lt;/sup&gt;</span><br><span class="line">        &lt;/label&gt;</span><br><span class="line">        @Html.EditorFor(m =&gt; m.Password,</span><br><span class="line">            new &#123; htmlAttributes = new &#123; @class = &quot;form-control&quot; &#125;&#125;)</span><br><span class="line">        @Html.ValidationMessageFor(m =&gt; m.Password,</span><br><span class="line">            string.Empty, new &#123; @class = &quot;error&quot; &#125;)</span><br><span class="line">    &lt;/fieldset&gt;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>We need to also turn on the jQuery unobtrusive validation in web.config:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="tag">&lt;<span class="name">appSettings</span>&gt;</span></span><br><span class="line">        ...</span><br><span class="line">        <span class="tag">&lt;<span class="name">add</span> <span class="attr">key</span>=<span class="string">"ClientValidationEnabled"</span> <span class="attr">value</span>=<span class="string">"true"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">add</span> <span class="attr">key</span>=<span class="string">"UnobtrusiveJavaScriptEnabled"</span> <span class="attr">value</span>=<span class="string">"true"</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<p>Additionaly we need to include following scripts in our page, at the end of html body element:</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">    ...</span><br><span class="line">    <span class="comment">&lt;!-- Javascripts --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"http://ajax.aspnetcdn.com/ajax/mvc/5.2.3/jquery.validate.unobtrusive.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>Full working code can be found on a <a href="https://github.com/aburok/umbraco-sandbox/tree/jquery-remote-validation" target="_blank" rel="external">branch of my Umbraco sandbox repo</a>.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://aburok.github.io/2016/05/31/asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco/" data-id="ciovxqjyd0003xcmtb4nrxpsk" class="article-share-link">Delen</a>
+      
+        <a href="http://aburok.github.io/2016/05/31/asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco/#disqus_thread" class="article-comment-link">Commentaren</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ASP-NET-MVC/">ASP.NET MVC</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Razor/">Razor</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Umbraco/">Umbraco</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/jQuery/">jQuery</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/05/29/Rendering-Asp-Net-Mvc-form-fields-with-helpers-and-HtmlHelper/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Ouder</strong>
+      <div class="article-nav-title">Rendering Asp.Net Mvc form fields with Razor @helper function and HtmlHelper extension method</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+</section>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Labels</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ASP-NET-MVC/">ASP.NET MVC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Asp-Net-MVC/">Asp.Net MVC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Razor/">Razor</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Umbraco/">Umbraco</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jQuery/">jQuery</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ASP-NET-MVC/" style="font-size: 10px;">ASP.NET MVC</a> <a href="/tags/Asp-Net-MVC/" style="font-size: 10px;">Asp.Net MVC</a> <a href="/tags/Razor/" style="font-size: 20px;">Razor</a> <a href="/tags/Umbraco/" style="font-size: 10px;">Umbraco</a> <a href="/tags/jQuery/" style="font-size: 10px;">jQuery</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archieven</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">May 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recente berichten</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/05/31/asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco/">Validating ASP.NET MVC form in razor with AJAX using RemoteAttribute in Umbraco application</a>
+          </li>
+        
+          <li>
+            <a href="/2016/05/29/Rendering-Asp-Net-Mvc-form-fields-with-helpers-and-HtmlHelper/">Rendering Asp.Net Mvc form fields with Razor @helper function and HtmlHelper extension method</a>
+          </li>
+        
+          <li>
+            <a href="/2016/05/19/using-Umbraco-with-jQuery-validation-and-MVC/">using Umbraco with jQuery validation and MVC</a>
+          </li>
+        
+          <li>
+            <a href="/2016/05/19/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Dawid Koruba<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+<script>
+  var disqus_shortname = 'aburok';
+  
+  var disqus_url = 'http://aburok.github.io/2016/05/31/asp-net-mvc-ajax-form-validation-using-remoteattribute-in-umbraco/';
+  
+  (function(){
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
